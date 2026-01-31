@@ -1,1 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMDB Clone - Home</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #032541;
+        }
+
+        /* Colore ufficiale TMDB */
+        .search-gradient {
+            background: linear-gradient(to right, rgba(30, 213, 169, 0.8), rgba(1, 180, 228, 0.8));
+        }
+    </style>
+</head>
+
+<body class="text-white font-sans">
+
+    <nav class="p-4 flex justify-between items-center bg-[#032541] shadow-xl">
+        <h1 class="text-2xl font-bold text-[#01b4e4] tracking-wider uppercase">MovieDB</h1>
+    </nav>
+
+    <header class="p-8 md:p-16 bg-cover bg-center relative"
+        style="background-image: url('https://www.themoviedb.org/t/p/w1920_and_h600_multi_faces_filter(duotone,00192f,00b4e4)/628MTeuWV9isoxv9W61pG9fhidM.jpg');">
+        <div class="relative z-10">
+            <h2 class="text-4xl font-bold mb-4">Benvenuto.</h2>
+            <p class="text-xl mb-8">Milioni di film e persone da scoprire. Esplora ora.</p>
+
+            <div class="relative max-w-4xl">
+                <input type="text" id="searchInput" placeholder="Cerca un film, un attore o un genere..."
+                    class="w-full p-4 rounded-full text-black outline-none">
+                <button onclick="performSearch()"
+                    class="absolute right-0 top-0 h-full px-8 rounded-full search-gradient font-bold hover:text-black transition">
+                    Cerca
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <h3 class="text-2xl font-semibold mb-6">Tendenze</h3>
+        <div id="movieGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        </div>
+    </main>
+
+    <script>
+        // Modificato: puntiamo alle rotte relative gestite da FastAPI
+        const API_BASE = "/api";
+
+        async function fetchMovies(url = `${API_BASE}/movies`) {
+            try {
+                const response = await fetch(url);
+                const movies = await response.json();
+                renderGrid(movies);
+            } catch (error) {
+                console.error("Errore nel caricamento dei dati:", error);
+            }
+        }
+
+        function renderGrid(movies) {
+            const grid = document.getElementById('movieGrid');
+            grid.innerHTML = "";
+
+            if (movies.length === 0) {
+                grid.innerHTML = `
+                <div class="col-span-full py-20 text-center">
+                    <h2 class="text-2xl font-semibold text-gray-400">Nessun risultato trovato</h2>
+                    <p class="text-gray-500 mt-2">Prova a cercare un altro titolo, attore o genere.</p>
+                    <button onclick="fetchMovies()" class="mt-4 text-[#01b4e4] underline">Torna ai film popolari</button>
+                </div>`;
+                return;
+            }
+
+            movies.forEach(movie => {
+                const year = new Date(movie.details.release_date).getFullYear();
+                const card = `
+                <div class="bg-[#032541] rounded-lg overflow-hidden shadow-lg cursor-pointer transform hover:scale-105 transition duration-200"
+                     onclick="window.location.href='/movie?id=${movie.movie_id}'">
+                    <div class="relative">
+                        <img src="${movie.media.poster_url}" alt="${movie.title}" class="w-full h-auto">
+                        <div class="absolute -bottom-4 left-3 bg-black border-2 border-[#1ed5a9] text-white text-xs font-bold rounded-full w-10 h-10 flex items-center justify-center">
+                            ${Math.round(movie.details.vote_average * 10)}%
+                        </div>
+                    </div>
+                    <div class="p-4 pt-6">
+                        <h4 class="font-bold text-sm leading-tight">${movie.title}</h4>
+                        <p class="text-gray-400 text-xs mt-1">${year}</p>
+                    </div>
+                </div>`;
+                grid.innerHTML += card;
+            });
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if (query.length >= 2) {
+                fetchMovies(`${API_BASE}/search/?q=${query}`);
+            } else if (query.length === 0) {
+                fetchMovies();
+            }
+        }
+
+        fetchMovies();
+    </script>
+</body>
+
+</html>

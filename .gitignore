@@ -1,0 +1,24 @@
+# --- Credenziali e Variabili d'Ambiente ---
+# Questo è il più importante: evita che la password di Atlas finisca online
+.env
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# --- Database Locali ---
+# Ignora il database SQLite e il file JSON se non vuoi condividerli
+*.db
+data.json
+
+# --- Editor e Sistema Operativo ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+github-token.txt

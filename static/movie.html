@@ -1,1 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dettagli Film - TMDB Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #032541;
+            color: white;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .hero-overlay {
+            background-image: linear-gradient(to right, rgba(3, 37, 65, 1) 150px, rgba(3, 37, 65, 0.7) 100%);
+        }
+    </style>
+</head>
+
+<body class="font-sans">
+
+    <nav class="p-4 bg-[#032541] shadow-xl flex justify-between items-center border-b border-gray-700">
+        <a href="/" class="text-[#01b4e4] font-bold text-xl uppercase tracking-tighter">MovieDB</a>
+        <a href="/" class="text-sm hover:text-[#01b4e4] transition">← Torna alla Home</a>
+    </nav>
+
+    <div id="movieContent">
+        <div class="flex justify-center items-center h-[80vh]">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#01b4e4]"></div>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const movieId = params.get('id');
+
+        // Modificato: puntiamo alla rotta API relativa gestita da FastAPI
+        const API_BASE = "/api/movies";
+
+        async function loadMovieDetails() {
+            const container = document.getElementById('movieContent');
+
+            try {
+                const response = await fetch(`${API_BASE}/${movieId}`);
+
+                if (!response.ok) {
+                    throw new Error("Film non trovato");
+                }
+
+                const movie = await response.json();
+                document.title = `${movie.title} - Dettagli`;
+
+                container.innerHTML = `
+                    <div class="relative w-full min-h-[500px] flex items-center bg-cover bg-center" 
+                         style="background-image: url('${movie.media.backdrop_url}');">
+                        
+                        <div class="absolute inset-0 hero-overlay"></div>
+                        
+                        <div class="container mx-auto px-6 py-10 relative z-10 flex flex-col md:flex-row gap-10">
+                            <div class="flex-shrink-0">
+                                <img src="${movie.media.poster_url}" 
+                                     class="w-80 rounded-xl shadow-2xl border border-gray-800" 
+                                     alt="${movie.title}"
+                                     onerror="this.src='https://via.placeholder.com/500x750?text=No+Image'">
+                            </div>
+                            
+                            <div class="flex flex-col justify-center">
+                                <h1 class="text-5xl font-bold">
+                                    ${movie.title} 
+                                    <span class="font-light text-gray-400 ml-2">(${new Date(movie.details.release_date).getFullYear()})</span>
+                                </h1>
+                                
+                                <div class="flex flex-wrap items-center gap-3 mt-4 text-sm">
+                                    <span class="border border-gray-400 px-2 py-0.5 rounded text-gray-300">TUTTI</span>
+                                    <span class="text-gray-300">${movie.details.release_date}</span>
+                                    <span class="text-gray-300">•</span>
+                                    <span class="text-gray-300">${movie.details.genres.join(', ')}</span>
+                                    <span class="text-gray-300">•</span>
+                                    <span class="text-gray-300">${movie.details.runtime} min</span>
+                                </div>
+
+                                <div class="mt-8 flex items-center gap-6">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-16 h-16 bg-[#081c22] border-4 border-[#21d07a] rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                                            ${Math.round(movie.details.vote_average * 10)}<span class="text-[10px]">%</span>
+                                        </div>
+                                        <span class="font-bold leading-tight">Punteggio<br>Utente</span>
+                                    </div>
+                                    
+                                    <a href="${movie.media.trailer_url}" target="_blank" 
+                                       class="flex items-center gap-2 font-semibold hover:text-gray-300 transition group">
+                                        <span class="text-2xl group-hover:scale-110 transition-transform">▶</span> Riproduci Trailer
+                                    </a>
+                                </div>
+
+                                <div class="mt-8">
+                                    <h3 class="text-xl font-bold mb-2">Sinossi</h3>
+                                    <p class="text-gray-200 leading-relaxed max-w-3xl text-lg font-light">
+                                        ${movie.details.overview}
+                                    </p>
+                                </div>
+
+                                <div class="mt-8 grid grid-cols-2 gap-8">
+                                    <div>
+                                        <p class="font-bold text-lg">${movie.director.name}</p>
+                                        <p class="text-sm text-gray-400 italic">Regista</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="container mx-auto px-6 py-12">
+                        <h3 class="text-2xl font-bold mb-8 border-l-4 border-[#01b4e4] pl-4">Cast Principale</h3>
+                        
+                        <div class="flex overflow-x-auto gap-5 no-scrollbar pb-6">
+                            ${movie.cast.map(actor => `
+                                <div class="min-w-[140px] md:min-w-[160px] bg-white text-black rounded-lg overflow-hidden shadow-xl">
+                                    <img src="${actor.photo}" 
+                                         class="w-full h-48 object-cover" 
+                                         alt="${actor.name}"
+                                         onerror="this.src='https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-4-user-7328f107354676654b9d564b1f6920970a9557610059b5821.svg'">
+                                    <div class="p-3">
+                                        <p class="font-bold text-sm leading-tight">${actor.name}</p>
+                                        <p class="text-xs text-gray-500 mt-1">${actor.character}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                // Pagina 404 personalizzata aggiornata con link alla rotta "/"
+                container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+                        <h1 class="text-9xl font-black text-white-800 tracking-tighter">404</h1>
+                        <h2 class="text-3xl font-bold mt-4 uppercase">Ops! Qualcosa è andato storto</h2>
+                        <p class="text-gray-400 mt-2 max-w-md">
+                            Non siamo riusciti a trovare il film con ID: <span class="text-red-500 font-mono">${movieId}</span>. 
+                            Verifica l'URL o torna alla home.
+                        </p>
+                        <a href="/" class="mt-10 px-8 py-3 bg-[#01b4e4] text-white rounded-full font-bold hover:bg-white hover:text-[#032541] transition-all duration-300 shadow-lg">
+                            Torna alla Home
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        if (movieId) {
+            loadMovieDetails();
+        } else {
+            // Se non c'è ID, torna alla rotta principale gestita da FastAPI
+            window.location.href = '/';
+        }
+    </script>
+</body>
+
+</html>
